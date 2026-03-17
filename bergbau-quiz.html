@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Bergbau Quiz</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Source+Sans+3:wght@400;600&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --forest:   #1a3a2a;
+      --moss:     #2d5a3d;
+      --leaf:     #4a8c5c;
+      --sand:     #e8e0d0;
+      --cream:    #f5f0e8;
+      --gold:     #c9a84c;
+      --correct:  #2d7a4a;
+      --wrong:    #8b3a2a;
+      --text:     #1a2a1e;
+    }
+
+    body {
+      font-family: 'Source Sans 3', sans-serif;
+      background: var(--forest);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px;
+      background-image:
+        radial-gradient(ellipse at 20% 50%, rgba(74,140,92,0.15) 0%, transparent 60%),
+        radial-gradient(ellipse at 80% 20%, rgba(201,168,76,0.08) 0%, transparent 50%);
+    }
+
+    .card {
+      background: var(--cream);
+      border-radius: 4px;
+      max-width: 640px;
+      width: 100%;
+      overflow: hidden;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.4), 0 4px 16px rgba(0,0,0,0.2);
+    }
+
+    .card-header {
+      background: var(--moss);
+      padding: 28px 36px 24px;
+      position: relative;
+      overflow: hidden;
+    }
+    .card-header::after {
+      content: '';
+      position: absolute;
+      bottom: -1px; left: 0; right: 0;
+      height: 32px;
+      background: var(--cream);
+      clip-path: ellipse(55% 100% at 50% 100%);
+    }
+    .label {
+      font-family: 'Source Sans 3', sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 10px;
+    }
+    .question {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(18px, 3vw, 22px);
+      color: var(--sand);
+      line-height: 1.45;
+      padding-right: 16px;
+    }
+
+    .card-body {
+      padding: 28px 36px 36px;
+    }
+
+    .options {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .option {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 18px;
+      border: 2px solid transparent;
+      border-radius: 4px;
+      background: white;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+    }
+    .option:hover:not(.disabled) {
+      border-color: var(--leaf);
+      transform: translateX(4px);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .option.selected {
+      border-color: var(--leaf);
+      background: rgba(74,140,92,0.06);
+    }
+    .option.disabled { cursor: default; }
+    .option.correct-answer {
+      border-color: var(--correct);
+      background: rgba(45,122,74,0.08);
+    }
+    .option.wrong-answer {
+      border-color: var(--wrong);
+      background: rgba(139,58,42,0.07);
+    }
+
+    .option-letter {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--sand);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 13px;
+      color: var(--moss);
+      flex-shrink: 0;
+      transition: all 0.2s;
+    }
+    .option.selected .option-letter,
+    .option.correct-answer .option-letter {
+      background: var(--leaf);
+      color: white;
+    }
+    .option.wrong-answer .option-letter {
+      background: var(--wrong);
+      color: white;
+    }
+
+    .option-text {
+      font-size: 15px;
+      color: var(--text);
+      line-height: 1.4;
+    }
+
+    .btn-submit {
+      width: 100%;
+      padding: 15px;
+      background: var(--moss);
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-family: 'Source Sans 3', sans-serif;
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-submit:hover:not(:disabled) {
+      background: var(--forest);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+    .btn-submit:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .feedback {
+      display: none;
+      margin-top: 20px;
+      padding: 18px 20px;
+      border-radius: 4px;
+      border-left: 4px solid;
+      animation: slideIn 0.35s ease;
+    }
+    .feedback.show { display: block; }
+    .feedback.correct {
+      background: rgba(45,122,74,0.08);
+      border-color: var(--correct);
+    }
+    .feedback.wrong {
+      background: rgba(139,58,42,0.07);
+      border-color: var(--wrong);
+    }
+    .feedback-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 17px;
+      margin-bottom: 6px;
+    }
+    .feedback.correct .feedback-title { color: var(--correct); }
+    .feedback.wrong   .feedback-title { color: var(--wrong); }
+    .feedback-text {
+      font-size: 14px;
+      color: var(--text);
+      line-height: 1.6;
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+<div class="card">
+  <div class="card-header">
+    <div class="label">Wissenscheck · Bergbau &amp; Natur</div>
+    <div class="question">In welchem Umkreis um eine Mine können noch negative Auswirkungen auf den Wald und die Artenvielfalt festgestellt werden?</div>
+  </div>
+  <div class="card-body">
+    <div class="options" id="options">
+      <div class="option" data-value="A" onclick="select(this)">
+        <div class="option-letter">A</div>
+        <div class="option-text">Nur direkt auf dem Minengelände</div>
+      </div>
+      <div class="option" data-value="B" onclick="select(this)">
+        <div class="option-letter">B</div>
+        <div class="option-text">Bis zu 5 km</div>
+      </div>
+      <div class="option" data-value="C" onclick="select(this)">
+        <div class="option-letter">C</div>
+        <div class="option-text">Bis zu 20 km</div>
+      </div>
+      <div class="option" data-value="D" onclick="select(this)">
+        <div class="option-letter">D</div>
+        <div class="option-text">Bis zu 70 km</div>
+      </div>
+    </div>
+
+    <button class="btn-submit" id="submitBtn" onclick="submit()" disabled>Antwort bestätigen</button>
+
+    <div class="feedback" id="feedback">
+      <div class="feedback-title" id="feedbackTitle"></div>
+      <div class="feedback-text" id="feedbackText"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const CORRECT = 'D';
+  const MESSAGES = {
+    A: {
+      title: 'Leider nicht richtig.',
+      text:  'Die Auswirkungen von Bergbau reichen weit über das Minengelände hinaus – Lärm, Staub, veränderte Wasserläufe und Habitatverlust beeinflussen die Umgebung auf großer Fläche.'
+    },
+    B: {
+      title: 'Nicht ganz.',
+      text:  '5 km ist eine deutliche Unterschätzung. Studien zeigen, dass Bergbau die Umwelt in einem viel weiteren Radius beeinflusst – durch Wasserverschmutzung, Straßenbau und Lärm.'
+    },
+    C: {
+      title: 'Knapp daneben!',
+      text:  '20 km klingt viel, reicht aber noch nicht. Die tatsächlichen Auswirkungen auf Wälder und Artenvielfalt können sich noch weiter erstrecken.'
+    },
+    D: {
+      title: '✓ Richtig!',
+      text:  'Korrekt! Studien belegen, dass die negativen Auswirkungen von Bergbau auf Wald und Artenvielfalt bis zu 70 km weit reichen können – durch Straßeninfrastruktur, Wasserverschmutzung, Lärm und Habitatfragmentierung.'
+    }
+  };
+
+  let chosen = null;
+
+  function select(el) {
+    if (document.getElementById('submitBtn').disabled === false || chosen) {
+      const already = document.querySelector('.option.selected');
+      if (already) already.classList.remove('selected');
+    }
+    if (document.querySelector('.option.correct-answer') || document.querySelector('.option.wrong-answer')) return;
+    document.querySelectorAll('.option').forEach(o => o.classList.remove('selected'));
+    el.classList.add('selected');
+    chosen = el.dataset.value;
+    document.getElementById('submitBtn').disabled = false;
+  }
+
+  function submit() {
+    if (!chosen) return;
+    document.querySelectorAll('.option').forEach(o => {
+      o.classList.add('disabled');
+      o.onclick = null;
+    });
+    const selectedEl = document.querySelector('.option[data-value="' + chosen + '"]');
+    const correctEl  = document.querySelector('.option[data-value="' + CORRECT + '"]');
+    if (chosen === CORRECT) {
+      selectedEl.classList.add('correct-answer');
+    } else {
+      selectedEl.classList.add('wrong-answer');
+      correctEl.classList.add('correct-answer');
+    }
+    const fb = document.getElementById('feedback');
+    fb.className = 'feedback show ' + (chosen === CORRECT ? 'correct' : 'wrong');
+    document.getElementById('feedbackTitle').textContent = MESSAGES[chosen].title;
+    document.getElementById('feedbackText').textContent  = MESSAGES[chosen].text;
+    document.getElementById('submitBtn').disabled = true;
+  }
+</script>
+</body>
+</html>
